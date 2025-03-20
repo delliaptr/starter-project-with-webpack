@@ -5,6 +5,7 @@ class App {
   #content = null;
   #drawerButton = null;
   #navigationDrawer = null;
+  #currentPage = null;
 
   constructor({ navigationDrawer, drawerButton, content }) {
     this.#content = content;
@@ -35,9 +36,35 @@ class App {
   async renderPage() {
     const url = getActiveRoute();
     const page = routes[url];
+    
+    if (!page) {
+      this.#content.innerHTML = `
+        <div class="container error-container">
+          <h2>404 - Halaman Tidak Ditemukan</h2>
+          <p>Maaf, halaman yang Anda cari tidak ditemukan.</p>
+          <a href="#/" class="btn-primary">Kembali ke Beranda</a>
+        </div>
+      `;
+      return;
+    }
 
-    this.#content.innerHTML = await page.render();
-    await page.afterRender();
+    // Cleanup previous page if it has _onUnmount method
+    if (this.#currentPage && typeof this.#currentPage._onUnmount === 'function') {
+      await this.#currentPage._onUnmount();
+    }
+    
+    // Use View Transition API if supported
+    if (document.startViewTransition) {
+      document.startViewTransition(async () => {
+        this.#content.innerHTML = await page.render();
+        await page.afterRender();
+      });
+    } else {
+      this.#content.innerHTML = await page.render();
+      await page.afterRender();
+    }
+    
+    this.#currentPage = page;
   }
 }
 
