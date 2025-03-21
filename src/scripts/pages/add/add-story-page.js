@@ -266,11 +266,13 @@ export default class AddStoryPage {
         const imageResponse = await fetch(capturedImage.src);
         const imageBlob = await imageResponse.blob();
         
-        // Create form data
+        // Create form data with the correct parameter names
         const formData = new FormData();
-        formData.append('name', name);
         formData.append('description', description);
         formData.append('photo', imageBlob, 'photo.jpg');
+        
+        // Try to submit without the 'name' or 'title' parameter first
+        // as this seems to be causing the API error
         
         if (this.#selectedPosition) {
           formData.append('lat', this.#selectedPosition.lat);
@@ -295,18 +297,59 @@ export default class AddStoryPage {
       } catch (error) {
         console.error('Error submitting story:', error);
         
-        // Show error message
-        submissionStatus.style.display = 'block';
-        submissionStatus.innerHTML = `
-          <div class="error-message">
-            <h3>Gagal menambahkan cerita</h3>
-            <p>Silakan coba lagi.</p>
-          </div>
-        `;
-        
-        // Reset button state
-        submitButton.disabled = false;
-        submitButton.innerHTML = 'Kirim Cerita';
+        // If the first attempt failed, try a second approach
+        try {
+          // Get form data again
+          const name = nameInput.value;
+          const description = descriptionInput.value;
+          const capturedImage = document.getElementById('captured-image');
+          
+          // Convert image to blob
+          const imageResponse = await fetch(capturedImage.src);
+          const imageBlob = await imageResponse.blob();
+          
+          // Create new FormData with different parameter name
+          const formData = new FormData();
+          // Since 'title' is not allowed and 'name' didn't work,
+          // try with 'description' parameter containing the title information
+          formData.append('description', `${name}\n\n${description}`);
+          formData.append('photo', imageBlob, 'photo.jpg');
+          
+          if (this.#selectedPosition) {
+            formData.append('lat', this.#selectedPosition.lat);
+            formData.append('lon', this.#selectedPosition.lng);
+          }
+          
+          // Send to API
+          const response = await Api.addStory(formData);
+          
+          // Show success message
+          submissionStatus.style.display = 'block';
+          submissionStatus.innerHTML = `
+            <div class="success-message">
+              <h3>Cerita berhasil ditambahkan!</h3>
+              <p>Mengalihkan ke halaman utama...</p>
+            </div>
+          `;
+          
+          // Redirect to home page after delay
+          await sleep(2000);
+          window.location.hash = '#/';
+        } catch (secondError) {
+          // Show error message for both attempts
+          submissionStatus.style.display = 'block';
+          submissionStatus.innerHTML = `
+            <div class="error-message">
+              <h3>Gagal menambahkan cerita</h3>
+              <p>Error: ${error.message}</p>
+              <p>Silakan coba lagi atau periksa dokumentasi API.</p>
+            </div>
+          `;
+          
+          // Reset button state
+          submitButton.disabled = false;
+          submitButton.innerHTML = 'Kirim Cerita';
+        }
       }
     });
   }
