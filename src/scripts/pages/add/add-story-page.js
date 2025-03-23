@@ -91,19 +91,15 @@ export default class AddStoryPage {
       cameraPreview.srcObject = this.#cameraStream;
       
       cameraButton.addEventListener('click', () => {
-        // Set canvas dimensions to match video
         cameraCanvas.width = cameraPreview.videoWidth;
         cameraCanvas.height = cameraPreview.videoHeight;
         
-        // Draw current video frame to canvas
         const context = cameraCanvas.getContext('2d');
         context.drawImage(cameraPreview, 0, 0, cameraCanvas.width, cameraCanvas.height);
         
-        // Convert canvas to image data URL
         const imageDataUrl = cameraCanvas.toDataURL('image/jpeg');
         capturedImage.src = imageDataUrl;
         
-        // Show captured image and retake button
         cameraResult.style.display = 'block';
         retakeButton.style.display = 'inline-block';
         cameraButton.style.display = 'none';
@@ -114,13 +110,11 @@ export default class AddStoryPage {
       });
       
       retakeButton.addEventListener('click', async () => {
-        // Hide captured image and show camera preview again
         cameraResult.style.display = 'none';
         retakeButton.style.display = 'none';
         cameraButton.style.display = 'inline-block';
         cameraPreview.style.display = 'block';
         
-        // Restart camera stream
         await this._initCamera();
         this._updateSubmitButtonState();
       });
@@ -157,7 +151,6 @@ export default class AddStoryPage {
   }
   
   _initMap() {
-    // Load MapTiler script dynamically
     const script = document.createElement('script');
     script.src = 'https://cdn.maptiler.com/maplibre-gl-js/v2.4.0/maplibre-gl.js';
     document.head.appendChild(script);
@@ -172,14 +165,12 @@ export default class AddStoryPage {
       this.#map = new maplibregl.Map({
         container: 'map-picker',
         style: `https://api.maptiler.com/maps/streets/style.json?key=${CONFIG.MAP_TILER_KEY}`,
-        center: [107.6191, -6.9175], // Default to Indonesia
+        center: [107.6191, -6.9175], 
         zoom: 9
       });
       
-      // Add navigation control
       this.#map.addControl(new maplibregl.NavigationControl(), 'top-right');
       
-      // Add layer control with different map styles
       const layerControl = document.createElement('div');
       layerControl.className = 'layer-control';
       layerControl.innerHTML = `
@@ -197,12 +188,10 @@ export default class AddStoryPage {
         this.#map.setStyle(`https://api.maptiler.com/maps/${style}/style.json?key=${CONFIG.MAP_TILER_KEY}`);
       });
       
-      // Add click event to select location
       this.#map.on('click', (e) => {
         const { lng, lat } = e.lngLat;
         this.#selectedPosition = { lng, lat };
         
-        // Update or create marker
         if (this.#marker) {
           this.#marker.setLngLat([lng, lat]);
         } else {
@@ -211,7 +200,6 @@ export default class AddStoryPage {
             .addTo(this.#map);
         }
         
-        // Update location info
         document.getElementById('location-info').innerHTML = `
           <p><strong>Lokasi dipilih:</strong></p>
           <p>Latitude: ${lat.toFixed(6)}</p>
@@ -252,37 +240,28 @@ export default class AddStoryPage {
       const submissionStatus = document.getElementById('submission-status');
       const submitButton = document.getElementById('submit-button');
       
-      // Show loading state
       submitButton.disabled = true;
       submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengirim...';
       
       try {
-        // Get form data
         const name = nameInput.value;
         const description = descriptionInput.value;
         const capturedImage = document.getElementById('captured-image');
         
-        // Convert image to blob
         const imageResponse = await fetch(capturedImage.src);
         const imageBlob = await imageResponse.blob();
         
-        // Create form data with the correct parameter names
         const formData = new FormData();
         formData.append('description', description);
         formData.append('photo', imageBlob, 'photo.jpg');
-        
-        // Try to submit without the 'name' or 'title' parameter first
-        // as this seems to be causing the API error
         
         if (this.#selectedPosition) {
           formData.append('lat', this.#selectedPosition.lat);
           formData.append('lon', this.#selectedPosition.lng);
         }
         
-        // Send to API
         const response = await Api.addStory(formData);
         
-        // Show success message
         submissionStatus.style.display = 'block';
         submissionStatus.innerHTML = `
           <div class="success-message">
@@ -290,28 +269,22 @@ export default class AddStoryPage {
             <p>Mengalihkan ke halaman utama...</p>
           </div>
         `;
-        
-        // Redirect to home page after delay
+
         await sleep(2000);
         window.location.hash = '#/';
       } catch (error) {
         console.error('Error submitting story:', error);
         
-        // If the first attempt failed, try a second approach
         try {
-          // Get form data again
           const name = nameInput.value;
           const description = descriptionInput.value;
           const capturedImage = document.getElementById('captured-image');
           
-          // Convert image to blob
           const imageResponse = await fetch(capturedImage.src);
           const imageBlob = await imageResponse.blob();
           
-          // Create new FormData with different parameter name
           const formData = new FormData();
-          // Since 'title' is not allowed and 'name' didn't work,
-          // try with 'description' parameter containing the title information
+
           formData.append('description', `${name}\n\n${description}`);
           formData.append('photo', imageBlob, 'photo.jpg');
           
