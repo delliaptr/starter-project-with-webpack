@@ -24,7 +24,7 @@ export default class RegisterPage {
           <div class="form-group">
             <label for="password">Password</label>
             <input type="password" id="password" name="password" required minlength="6">
-            <small>Minimal 6 karakter</small>
+            <small>Minimal 8 karakter</small>
           </div>
           
           <div class="form-actions">
