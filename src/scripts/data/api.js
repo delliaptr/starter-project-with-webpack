@@ -32,7 +32,6 @@ class Api {
         throw new Error(responseJson.message);
       }
 
-      // Simpan token ke localStorage
       localStorage.setItem('token', responseJson.loginResult.token);
       localStorage.setItem('user', JSON.stringify(responseJson.loginResult));
       
@@ -75,7 +74,6 @@ class Api {
       const token = localStorage.getItem('token');
       
       if (!token) {
-        // Jika tidak ada token, kembalikan array kosong alih-alih error
         console.warn('Token tidak ditemukan, mengembalikan array kosong');
         return [];
       }
@@ -107,6 +105,8 @@ class Api {
       if (!token) {
         throw new Error('Token tidak ditemukan, silakan login terlebih dahulu');
       }
+
+      console.log('Calling endpoint:', ENDPOINTS.STORY_DETAIL(id));
       
       const response = await fetch(ENDPOINTS.STORY_DETAIL(id), {
         headers: {
@@ -114,10 +114,13 @@ class Api {
         }
       });
       
+      console.log('Response status:', response.status);
+      
       const responseJson = await response.json();
+      console.log('Response data:', responseJson);
       
       if (responseJson.error) {
-        throw new Error(responseJson.message);
+        throw new Error(responseJson.message || 'Cerita tidak ditemukan');
       }
       
       return responseJson.story;
