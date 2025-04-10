@@ -2,8 +2,12 @@ import '../styles/styles.css';
 import '../styles/responsive.css';
 
 import App from './pages/app';
+import { registerServiceWorker } from './utils/sw-register';
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // Register service worker
+  await registerServiceWorker();
+  
   const app = new App({
     content: document.querySelector('#main-content'),
     drawerButton: document.querySelector('#drawer-button'),

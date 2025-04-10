@@ -5,12 +5,9 @@ import { sleep } from '../../../utils';
 export default class RegisterPage {
   #presenter;
   
-  constructor(presenter = null) {
-    this.#presenter = presenter;
-  }
-  
-  setPresenter(presenter) {
-    this.#presenter = presenter;
+  constructor() {
+    // The page itself acts as the view for the presenter
+    this.#presenter = new RegisterPresenter(Api, this);
   }
 
   async render() {
@@ -68,13 +65,11 @@ export default class RegisterPage {
       this._showLoadingState();
       
       // Let the presenter handle the registration logic
-      if (this.#presenter) {
-        await this.#presenter.register(
-          nameInput.value,
-          emailInput.value,
-          passwordInput.value
-        );
-      }
+      await this.#presenter.register(
+        nameInput.value,
+        emailInput.value,
+        passwordInput.value
+      );
     });
   }
   
